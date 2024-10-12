@@ -1,0 +1,38 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.node = void 0;
+const express_1 = require("express");
+const middleware_1 = require("@/middleware");
+const node_controller_1 = __importDefault(require("@/controller/node/node.controller"));
+const logs_controller_1 = __importDefault(require("@/controller/node/logs.controller"));
+const ml_controller_1 = __importDefault(require("@/controller/ai/ml.controller"));
+const aws_controller_1 = __importDefault(require("@/controller/ai/aws.controller"));
+const transaction_controller_1 = __importDefault(require("@/controller/user/transaction.controller"));
+const router = (0, express_1.Router)();
+exports.node = router;
+const nodeController = new node_controller_1.default();
+const logController = new logs_controller_1.default();
+const mlController = new ml_controller_1.default();
+const awsController = new aws_controller_1.default();
+const transactionController = new transaction_controller_1.default();
+router.get("/nodes", nodeController.getAllNodes);
+router.get("/active/nodes", nodeController.getAllActiveNodes);
+router.get("/my-nodes", middleware_1.authenticateJwt, nodeController.getMyNodes);
+router.get('/rental-nodes', middleware_1.authenticateJwt, nodeController.getMyRentalNodes);
+router.post('/add/new-task', middleware_1.authenticateJwt, nodeController.addNewTask);
+// router.get('/tasks', nodeController.addNewTask)
+router.post('/lend/gpu', middleware_1.authenticateJwt, nodeController.lendGpu);
+router.get('/logs/:taskId', logController.getLogs);
+router.get("/ai/models", mlController.getAiModels);
+router.post('/generate/presigned-url', awsController.generatePresignedUrl);
+router.get('/aws/test', awsController.test);
+router.get('/instances', awsController.getAllAvailableInstances);
+router.get('/instance-types', awsController.fetchAllInstanceTypes);
+router.post('/create/instance', middleware_1.authenticateJwt, awsController.createInstance);
+router.get('/status/instance/:instanceId', middleware_1.authenticateJwt, awsController.getInstanceStatus);
+router.get('/my-instances', middleware_1.authenticateJwt, awsController.getMyInstances);
+router.get('/instances/keypair/:keyName', middleware_1.authenticateJwt, awsController.getMyKeyPair);
+router.get('/transactions', middleware_1.authenticateJwt, transactionController.getMyTransactions);

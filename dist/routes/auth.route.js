@@ -1,0 +1,20 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.auth = void 0;
+const express_1 = require("express");
+const middleware_1 = require("@/middleware");
+const user_controller_1 = __importDefault(require("@/controller/user/user.controller"));
+const router = (0, express_1.Router)();
+exports.auth = router;
+const userController = new user_controller_1.default();
+// router.post("/register", userController.register);
+// router.post("/login", userController.login);
+router.post('/connect-wallet', userController.connectWallet);
+router.post('/check-user', userController.checkUser);
+router.post('/get/authenticated-user', middleware_1.authenticateJwt, userController.getAuthenticatedUser);
+router.post('/generate/session-id', userController.generateSessionId);
+router.post('/check/session-id/:sessionId', userController.checkSessionId);
+router.post('/verify/session-id', middleware_1.authenticateJwt, userController.verifyUserSession);

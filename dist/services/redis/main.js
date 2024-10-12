@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.subClient = exports.pubClient = void 0;
+const redis_1 = require("redis");
+const REDIS_HOST = "c15.us-east-1-2.ec2.cloud.redislabs.com";
+const REDIS_PORT = "14673";
+const REDIS_PASSWORD = "E3UYY7nXu88KAPaeHdXcEJKiVrCKcawu";
+const url = `redis://default:${REDIS_PASSWORD}@redis-${REDIS_PORT}.${REDIS_HOST}:${REDIS_PORT}`;
+exports.pubClient = (0, redis_1.createClient)({ url });
+exports.subClient = exports.pubClient.duplicate();
