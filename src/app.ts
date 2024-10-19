@@ -4,9 +4,10 @@ import cors from "cors";
 // import morgan from "morgan";
 // import { notFound, serverError } from "./middleware";
 // import { corsOptions, IN_PROD } from "./config";
-import { node, user, openai, data } from "./routes";
+import { node, user, openai, data, reward } from "./routes"
 import { IN_PROD, corsOptions } from "./config";
 import { errorHandler } from "./middleware/errorHandler";
+import { claimRewardEvent } from "./services/ethers/rewardClaimed"
 // import { morganOption } from "./config";
 
 export const createApp = () => {
@@ -32,6 +33,7 @@ export const createApp = () => {
   app.use("/api", openai);
   app.use("/api", node);
   app.use("/api", data);
+  app.use("/api", reward)
   // app.use("/api", ai);
 
 
@@ -40,6 +42,8 @@ export const createApp = () => {
   app.use(errorHandler);
   // app.use(notFound);
   // app.use(serverError);
+
+  claimRewardEvent()
 
   return app;
 };

@@ -61,6 +61,12 @@ export const getUserById = async (userId: string) => {
     });
 }
 
+export const getUserByAddress = async (address: string) => {
+  return await prisma.user.findUnique({
+    where: { publicAddress: address },
+  })
+}
+
 export const updateNonce = async (publicAddress: string) => {
     const nonce = Math.floor(Math.random() * 10000);
 
@@ -70,6 +76,19 @@ export const updateNonce = async (publicAddress: string) => {
     });
     return user;
 };
+
+export const updateUserRewardNonce = async (address: string) => {
+  const user = await getUserByAddress(address)
+  if (!user) {
+    throw new Error("User not found")
+  }
+
+  const rewardNonce = user.rewardNonce + 1
+  await prisma.user.update({
+    where: { publicAddress: address },
+    data: { rewardNonce },
+  })
+}
 
 export const updateBalance = async (userId: string, type: "ADD" | "MINUS", amount: number) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });

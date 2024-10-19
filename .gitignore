@@ -8,3 +8,5 @@ uploads
 .package-lock.json
 
 tmp.md
+
+dist/
