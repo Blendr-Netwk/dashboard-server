@@ -16,7 +16,13 @@ export async function getUserRewards(userId: string) {
   return await prisma.reward.findMany({
     where: {
       userId,
-      amount: { gt: 0 },
+    },
+    include: {
+      node: {
+        select: {
+          name: true,
+        },
+      },
     },
   })
 }

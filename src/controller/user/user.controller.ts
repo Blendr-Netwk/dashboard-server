@@ -84,8 +84,9 @@ class UserController {
     }
     public async verifyUserSession(req: Request, res: Response, next: NextFunction) {
         try {
-            //TODO: if generate auth errror make it status = error
             const { sessionId } = req.body;
+            if (!sessions[sessionId]) throw new Error("Session not found")
+
             const cliToken = generateAuthToken(req.user.id, req.user.publicAddress)
             sessions[sessionId].cliToken = cliToken;
             sessions[sessionId].publicAddress = req.user.publicAddress;
