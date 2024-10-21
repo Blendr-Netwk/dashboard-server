@@ -77,9 +77,7 @@ export class RewardService {
     await updateRewardEndDate(rewardId, endDate)
 
     if (rewardPeriod < lendPeriod) {
-      console.log(
-        `Penalty applied to userId ${userId} due to short lend period.`
-      )
+      console.log(`No reward for userId ${userId} due to short lend period.`)
     }
     this.rewardId = null
   }
