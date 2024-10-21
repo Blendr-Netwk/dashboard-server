@@ -1,4 +1,5 @@
 
+import { DAY, MINTUES } from '@/constant';
 import { PrismaClient } from '@prisma/client';
 
 
@@ -56,6 +57,11 @@ export const registerNode = async (socketId: string, userId: string, data: any) 
             ownerId: userId
         }
     });
+
+    // const lendPeriods = [1 * DAY, 3 * DAY, 5 * DAY]
+    const lendPeriods = [1 * MINTUES, 3 * MINTUES, 5 * MINTUES]
+    const lendPeriod = lendPeriods[parseInt(data.lend_period)]
+
     //update it if the data is new
     if (existingNode) {
         return await prisma.node.update({
@@ -65,6 +71,7 @@ export const registerNode = async (socketId: string, userId: string, data: any) 
             data: {
                 isConnected: true,
                 socketId: socketId,
+                lendPeriod,
                 price: data.price,
                 publicIp: data.public_ip,
                 port: data.port
@@ -84,6 +91,7 @@ export const registerNode = async (socketId: string, userId: string, data: any) 
             network: data.network_info,
             publicIp: data.public_ip,
             ownerId: userId,
+            lendPeriod,
             price: data.price,
             port: data.port
         }

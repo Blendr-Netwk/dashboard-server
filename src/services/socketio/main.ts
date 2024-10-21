@@ -1,14 +1,13 @@
-import { Server } from "socket.io"
-import { handleDisconnect, handleInitiateNode } from "./handler"
 import { verifyToken } from "@/middleware"
-import { pubClient } from "../redis"
-import { addLogToTask } from "../prisma/task/logs"
+import { Server } from "socket.io"
 import { freeTheNode } from "../prisma/node"
-import { addReward, endReward, startReward } from "../reward"
+import { addLogToTask } from "../prisma/task/logs"
+import { pubClient } from "../redis"
+import { RewardService } from "../reward"
+import { handleDisconnect, handleInitiateNode } from "./handler"
 
 export const initalizeSocketIO = async (io: Server) => {
   const mainIO = io.of("/")
-  const REWARD_DURATION = 5000 // 60 * 60 * 1000
 
   io.use(async (socket, next) => {
     try {
@@ -36,30 +35,16 @@ export const initalizeSocketIO = async (io: Server) => {
     const socketId = socket.id
     const userId = socket.user.id
 
+    const rewardService = new RewardService({ mainIO, socketId })
+    rewardService.start(userId)
+    
     console.log("New Connection: ", socketId)
     pubClient.set(`userId:${userId}`, socketId)
-
-    // Set up interval to check for rewards every hour
-    const rewardInterval = setInterval(async () => {
-      console.log("Add reward")
-
-      const rewardAmount = 1
-      const rewardId = await pubClient.get(`rewardId:${userId}`)
-      if (!rewardId) return
-      await addReward(rewardId, rewardAmount)
-
-      // Emit an event to inform the user about the reward
-      mainIO.to(socketId).emit("BMAIN: REWARD", {
-        message: `You have received ${rewardAmount} reward token!`,
-      })
-    }, REWARD_DURATION)
 
     socket.on("initialconfig", async (data) => {
       try {
         const response = await handleInitiateNode(socketId, userId, data)
-        const reward = await startReward(userId, response.id)
-        await pubClient.set(`rewardId:${userId}`, reward.id)
-
+        rewardService.init(userId, response.id)
         socket.emit("BMAIN: initialconfig", response)
       } catch (err) {
         socket.emit("BMAIN: error", { message: "Error in initial config" })
@@ -88,14 +73,8 @@ export const initalizeSocketIO = async (io: Server) => {
       console.log("Disconnect: ", socketId)
       try {
         await pubClient.del(`userId:${userId}`)
-
         await handleDisconnect(socketId)
-
-        clearInterval(rewardInterval)
-        const rewardId = await pubClient.get(`rewardId:${userId}`)
-        await pubClient.del(`rewardId:${userId}`)
-        if (!rewardId) return
-        await endReward(rewardId)
+        rewardService.end(userId)
       } catch (err) {
         console.log(err)
       }

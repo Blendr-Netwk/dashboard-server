@@ -10,7 +10,7 @@ export const claimRewardEvent = () => {
   const contract = new ethers.Contract(REWARD_ADDRESS, rewardABI, provider)
 
   contract.on("RewardClaimed", async (address, amount, _) => {
-    console.log(`Event received: ${address}, ${amount}`)
+    console.log("Claim Reward: ", `${address}, ${amount}`)
 
     await updateClaimReward(address, amount)
     await updateUserRewardNonce(address)

@@ -50,6 +50,7 @@ model Node {
   network     Json?
   status      String    @default("idle")
   isConnected Boolean   @default(false)
+  lendPeriod  Int       @default(0)
   price       Float     @default(0)
   socketId    String?
   owner       User      @relation(name: "nodes", fields: [ownerId], references: [id])
@@ -194,7 +195,7 @@ model Reward {
   nodeId        String
   amount        Float         @default(0)
   claimedAmount Float         @default(0)
-  startDate     DateTime?
+  startDate     DateTime      @default(now())
   endDate       DateTime?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt

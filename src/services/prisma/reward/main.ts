@@ -1,7 +1,16 @@
 import { prisma } from "../main"
 
 export async function getRewardById(id: string) {
-  return await prisma.reward.findUnique({ where: { id } })
+  return await prisma.reward.findUnique({
+    where: { id },
+    include: {
+      node: {
+        select: {
+          lendPeriod: true,
+        },
+      },
+    },
+  })
 }
 
 export async function getRewardsByNodeId(nodeId: string) {
@@ -32,7 +41,6 @@ export async function createReward(userId: string, nodeId: string) {
     data: {
       userId,
       nodeId,
-      startDate: new Date(),
     },
   })
 }
@@ -50,13 +58,16 @@ export async function updateRewardAmount(id: string, amount: number) {
   })
 }
 
-export async function updateRewardEndDate(id: string) {
+export async function updateRewardEndDate(
+  id: string,
+  endDate: Date
+) {
   return await prisma.reward.update({
     where: {
       id,
     },
     data: {
-      endDate: new Date(),
+      endDate,
     },
   })
 }
