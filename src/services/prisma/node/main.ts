@@ -1,5 +1,5 @@
 
-import { DAY, MINTUES } from '@/constant';
+import { REWARD_LENDS } from '@/constant';
 import { PrismaClient } from '@prisma/client';
 
 
@@ -58,9 +58,11 @@ export const registerNode = async (socketId: string, userId: string, data: any) 
         }
     });
 
-    // const lendPeriods = [1 * DAY, 3 * DAY, 5 * DAY]
-    const lendPeriods = [1 * MINTUES, 3 * MINTUES, 5 * MINTUES]
-    const lendPeriod = lendPeriods[parseInt(data.lend_period)]
+    const rewardLendId = data.lend_period
+    const rewardLend = REWARD_LENDS.find((r) => r.id === rewardLendId)
+
+    if (!rewardLend)
+        throw new Error('Invalid lend period')
 
     //update it if the data is new
     if (existingNode) {
@@ -71,10 +73,10 @@ export const registerNode = async (socketId: string, userId: string, data: any) 
             data: {
                 isConnected: true,
                 socketId: socketId,
-                lendPeriod,
                 price: data.price,
                 publicIp: data.public_ip,
-                port: data.port
+                port: data.port,
+                rewardLendId,
             }
         });
     }
@@ -91,9 +93,9 @@ export const registerNode = async (socketId: string, userId: string, data: any) 
             network: data.network_info,
             publicIp: data.public_ip,
             ownerId: userId,
-            lendPeriod,
             price: data.price,
-            port: data.port
+            port: data.port,
+            rewardLendId,
         }
     });
 }

@@ -36,7 +36,6 @@ export const initalizeSocketIO = async (io: Server) => {
     const userId = socket.user.id
 
     const rewardService = new RewardService({ mainIO, socketId })
-    rewardService.start(userId)
     
     console.log("New Connection: ", socketId)
     pubClient.set(`userId:${userId}`, socketId)
@@ -44,7 +43,7 @@ export const initalizeSocketIO = async (io: Server) => {
     socket.on("initialconfig", async (data) => {
       try {
         const response = await handleInitiateNode(socketId, userId, data)
-        rewardService.init(userId, response.id)
+        rewardService.start(userId, response.id)
         socket.emit("BMAIN: initialconfig", response)
       } catch (err) {
         socket.emit("BMAIN: error", { message: "Error in initial config" })
@@ -72,9 +71,9 @@ export const initalizeSocketIO = async (io: Server) => {
     socket.on("disconnect", async () => {
       console.log("Disconnect: ", socketId)
       try {
+        rewardService.end(userId)
         await pubClient.del(`userId:${userId}`)
         await handleDisconnect(socketId)
-        rewardService.end(userId)
       } catch (err) {
         console.log(err)
       }

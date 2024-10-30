@@ -1,3 +1,4 @@
+import { REWARD_DURATION, REWARD_LENDS, REWARD_PENALTY } from "@/constant"
 import { Reward } from "@prisma/client"
 import { generateSignature } from "../ethers/signature"
 import {
@@ -24,60 +25,72 @@ export class RewardService {
     this.context = context
   }
 
-  init = async (userId: string, nodeId: string) => {
+  start = async (userId: string, nodeId: string) => {
+    const { mainIO, socketId } = this.context
+
     const reward = await createReward(userId, nodeId)
     this.rewardId = reward.id
-  }
-
-  start = async (userId: string) => {
-    const { mainIO, socketId } = this.context
-    const REWARD_DURATION = 5000 // 60 * 60 * 1000
 
     this.rewardIntervalId = setInterval(async () => {
-      const rewardAmount = 1
       const rewardId = this.rewardId
       if (!rewardId) return
 
       const reward = await getRewardById(rewardId)
       if (!reward) throw new Error("Reward not found")
 
-      const startDate = reward.startDate
       const now = new Date()
-      const lendPeriod = reward.node.lendPeriod
+      const startDate = reward.startDate
+
+      const rewardLendId = reward.node.rewardLendId
+      const rewardLend = REWARD_LENDS.find((r) => r.id === rewardLendId)
+      if (!rewardLend) throw new Error("Invalid lend period")
+
+      const lendPeriod = rewardLend.lendPeriod
       const rewardPeriod = now.getTime() - startDate.getTime()
-      const isValid = rewardPeriod > lendPeriod
+      const isMultiply = rewardPeriod > lendPeriod
+      const rewardAmount = isMultiply
+        ? rewardLend.amount * rewardLend.multiply
+        : rewardLend.amount
 
-      if (isValid) {
-        await updateRewardAmount(rewardId, rewardAmount)
+      await updateRewardAmount(rewardId, rewardAmount)
 
-        console.log("Add Reward: ", socketId)
-        mainIO.to(socketId).emit("BMAIN: REWARD", {
-          message: `You have received ${rewardAmount} reward token!`,
-        })
-      }
+      console.log("Add Reward: ", socketId)
+      mainIO.to(socketId).emit("BMAIN: REWARD", {
+        message: `You have received ${rewardAmount} reward token!`,
+      })
     }, REWARD_DURATION)
   }
 
   end = async (userId: string) => {
-    if (this.rewardIntervalId) {
-      clearInterval(this.rewardIntervalId)
-      this.rewardIntervalId = null
-    }
+    if (!this.rewardIntervalId) return
+    clearInterval(this.rewardIntervalId)
+    this.rewardIntervalId = null
 
     const rewardId = this.rewardId
     if (!rewardId) return
 
     const reward = await getRewardById(rewardId)
+
     if (!reward) throw new Error("Reward not found")
+
     const startDate = reward.startDate
     const endDate = new Date()
-    const lendPeriod = reward.node.lendPeriod
+
+    const rewardLendId = reward.node.rewardLendId
+    const rewardLend = REWARD_LENDS.find((r) => r.id === rewardLendId)
+    if (!rewardLend) throw new Error("Invalid lend period")
+
+    const lendPeriod = rewardLend.lendPeriod
     const rewardPeriod = endDate.getTime() - startDate.getTime()
+    const isPenalty = rewardPeriod < lendPeriod
+    const rewardAmount = isPenalty
+      ? reward.amount * REWARD_PENALTY
+      : reward.amount
 
-    await updateRewardEndDate(rewardId, endDate)
+    await updateRewardEndDate(rewardId, rewardAmount, endDate)
 
-    if (rewardPeriod < lendPeriod) {
-      console.log(`No reward for userId ${userId} due to short lend period.`)
+    if (isPenalty) {
+      console.log(`Penalty for userId ${userId} due to short lend period.`)
     }
     this.rewardId = null
   }
@@ -85,10 +98,25 @@ export class RewardService {
 
 export const getUserTotalReward = async (userId: string) => {
   const rewards = await getUserRewards(userId)
-  const amountToClaim = rewards.reduce((amt: number, reward: Reward) => {
-    const unclaimedAmount = reward.amount - reward.claimedAmount
-    return amt + unclaimedAmount
-  }, 0)
+
+  const amountToClaim = rewards.reduce(
+    (amt: number, reward: Record<string, any>) => {
+      const rewardLendId = reward.node.rewardLendId
+      const rewardLend = REWARD_LENDS.find((r) => r.id === rewardLendId)
+      if (!rewardLend) throw new Error("Invalid lend period")
+
+      const now = new Date()
+      const startDate = reward.startDate
+
+      const lendPeriod = rewardLend.lendPeriod
+      const rewardPeriod = now.getTime() - startDate.getTime()
+      const isValid = reward.endDate || rewardPeriod > lendPeriod
+
+      const unclaimedAmount = isValid ? reward.amount - reward.claimedAmount : 0
+      return amt + unclaimedAmount
+    },
+    0
+  )
 
   return amountToClaim
 }
@@ -98,10 +126,24 @@ export const claimUserReward = async (userId: string) => {
   if (!user) throw new Error("user not found")
 
   const rewards = await getUserRewards(userId)
-  const amountToClaim = rewards.reduce((amt: number, reward: Reward) => {
-    const unclaimedAmount = reward.amount - reward.claimedAmount
-    return amt + unclaimedAmount
-  }, 0)
+  const amountToClaim = rewards.reduce(
+    (amt: number, reward: Record<string, any>) => {
+      const rewardLendId = reward.node.rewardLendId
+      const rewardLend = REWARD_LENDS.find((r) => r.id === rewardLendId)
+      if (!rewardLend) throw new Error("Invalid lend period")
+
+      const now = new Date()
+      const startDate = reward.startDate
+
+      const lendPeriod = rewardLend.lendPeriod
+      const rewardPeriod = now.getTime() - startDate.getTime()
+      const isValid = reward.endDate || rewardPeriod > lendPeriod
+
+      const unclaimedAmount = isValid ? reward.amount - reward.claimedAmount : 0
+      return amt + unclaimedAmount
+    },
+    0
+  )
 
   if (!amountToClaim)
     throw new Error("Reward must be greater than zero to claim.")

@@ -12,7 +12,7 @@ export const claimRewardEvent = () => {
   contract.on("RewardClaimed", async (address, amount, _) => {
     console.log("Claim Reward: ", `${address}, ${amount}`)
 
-    await updateClaimReward(address, amount)
+    await updateClaimReward(address, ethers.formatUnits(amount, 18))
     await updateUserRewardNonce(address)
   })
 }

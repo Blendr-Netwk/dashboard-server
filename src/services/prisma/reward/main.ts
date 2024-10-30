@@ -6,7 +6,7 @@ export async function getRewardById(id: string) {
     include: {
       node: {
         select: {
-          lendPeriod: true,
+          rewardLendId: true,
         },
       },
     },
@@ -30,6 +30,7 @@ export async function getUserRewards(userId: string) {
       node: {
         select: {
           name: true,
+          rewardLendId: true,
         },
       },
     },
@@ -60,6 +61,7 @@ export async function updateRewardAmount(id: string, amount: number) {
 
 export async function updateRewardEndDate(
   id: string,
+  amount:  number,
   endDate: Date
 ) {
   return await prisma.reward.update({
@@ -67,6 +69,7 @@ export async function updateRewardEndDate(
       id,
     },
     data: {
+      amount,
       endDate,
     },
   })

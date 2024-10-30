@@ -20,9 +20,11 @@ export async function generateSignature(
 
   const wallet = new ethers.Wallet(privateKey)
 
+  const amountInWei = ethers.parseUnits(amount.toString(), 18)
+
   const message = ethers.solidityPackedKeccak256(
     ["address", "uint256", "uint256", "uint256"],
-    [userAddress, amount, nonce, timestamp]
+    [userAddress, amountInWei, nonce, timestamp]
   )
 
   const signature = await wallet.signMessage(ethers.getBytes(message))
