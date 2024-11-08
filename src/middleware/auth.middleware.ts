@@ -1,7 +1,7 @@
-import { verifyJWTToken } from "@/services/jwt";
-import { getUser } from "@/services/prisma/user";
-import { IUser } from "@/types";
-import { Request, Response, NextFunction } from "express";
+import { verifyJWTToken } from "@/services/jwt"
+import { getUser } from "@/services/prisma/user"
+import { IUser } from "@/types"
+import { Request, Response, NextFunction } from "express"
 
 export const authenticateJwt = async (
   req: Request,
@@ -9,24 +9,24 @@ export const authenticateJwt = async (
   next: NextFunction
 ) => {
   try {
-
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
+    const authHeader = req.headers["authorization"]
+    const token = authHeader && authHeader.split(" ")[1]
 
     if (!token || token === "" || token == undefined)
-      throw new Error("no token");
+      throw new Error("no token")
 
-    let user = await verifyToken(token);
-    req.user = user;
-    // throw new Unauthorized('no user found')
+    const user = await verifyToken(token)
+    req.user = user
+
     if (req.user === undefined) {
-      throw new Error("internal Error");
+      throw new Error("internal Error")
     }
-    next();
+
+    next()
   } catch (err: any) {
-    next(err);
+    next(err)
   }
-};
+}
 export const authenticateAdmin = async (
   req: Request,
   res: Response,
@@ -44,19 +44,18 @@ export const authenticateAdmin = async (
     // if (req.user.role !== "ADMIN") {
     //   throw new Error("unauthorised (admin only)")
     // }
-    next();
+    next()
   } catch (err: any) {
-    next(err);
+    next(err)
   }
-};
+}
 
-export const verifyToken = async (token: string):Promise<IUser> => {
+export const verifyToken = async (token: string): Promise<IUser> => {
+  const payload = await verifyJWTToken(token)
 
-  let payload = await verifyJWTToken(token)
+  const user = await getUser(payload.publicAddress)
 
-  const user = await getUser(payload.publicAddress);
+  if (!user) throw new Error("no user found")
 
-  if (!user) throw new Error("no user found");
-
-  return user;
-};
+  return user
+}

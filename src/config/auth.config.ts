@@ -1,3 +1,1 @@
-
-
-export const JWT_EXPIRATION = '7d'
+export const JWT_EXPIRATION = "7d"

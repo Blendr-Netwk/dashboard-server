@@ -1,4 +1,4 @@
-import { DAY,MINTUES } from "./time";
+import { MINTUES } from "./time"
 
 const DURATION_UNIT = MINTUES
 

@@ -1,1 +1,1 @@
-export const APP_NAME = "Blendr";
+export const APP_NAME = "Blendr"

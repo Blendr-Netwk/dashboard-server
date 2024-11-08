@@ -1,25 +1,22 @@
-// import { Socket } from "socket.io";
-
 declare global {
-    namespace Express {
-        interface Request {
-            user: IUser//IUser;
-        }
+  namespace Express {
+    interface Request {
+      user: IUser
     }
+  }
 }
 
 declare module "socket.io" {
-    interface Socket {
-        user: IUser;
-    }
+  interface Socket {
+    user: IUser
+  }
 }
 
 export interface IUser {
-    id: string
-    username: string | null;
-    email: string | null;
-    publicAddress: string;
-    balance: number;
-    nonce: number;
-
+  id: string
+  username: string | null
+  email: string | null
+  publicAddress: string
+  balance: number
+  nonce: number
 }

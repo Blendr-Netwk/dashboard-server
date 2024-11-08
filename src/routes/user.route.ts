@@ -1,34 +1,38 @@
-import { Router } from "express";
-import { authenticateJwt } from "@/middleware";
-import UserController from "@/controller/user/user.controller";
-import WalletController from "@/controller/user/wallet.controller";
+import { Router } from "express"
+import { authenticateJwt } from "@/middleware"
+import UserController from "@/controller/user/user.controller"
+import WalletController from "@/controller/user/wallet.controller"
 
-const router = Router();
-const userController: UserController = new UserController();
-const walletController: WalletController = new WalletController();
+const router = Router()
+const userController: UserController = new UserController()
+const walletController: WalletController = new WalletController()
 
-// router.post("/register", userController.register);
+router.post("/connect-wallet", userController.connectWallet)
 
-// router.post("/login", userController.login);
+router.post("/check-user", userController.checkUser)
 
-router.post('/connect-wallet', userController.connectWallet)
+router.post("/update/username", authenticateJwt, userController.updateUsername)
 
-router.post('/check-user', userController.checkUser)
+router.post(
+  "/update/ssh-public-key",
+  authenticateJwt,
+  userController.updateTheSSHPublicKey
+)
 
-router.post('/update/username', authenticateJwt, userController.updateUsername)
+router.post(
+  "/get/authenticated-user",
+  authenticateJwt,
+  userController.getAuthenticatedUser
+)
 
-router.post('/update/ssh-public-key', authenticateJwt, userController.updateTheSSHPublicKey)
+router.post("/generate/session-id", userController.generateSessionId)
+router.post("/check/session-id/:sessionId", userController.checkSessionId)
+router.post(
+  "/verify/session-id",
+  authenticateJwt,
+  userController.verifyUserSession
+)
 
+router.post("/deposit", authenticateJwt, walletController.deposit)
 
-router.post('/get/authenticated-user', authenticateJwt, userController.getAuthenticatedUser)
-
-
-router.post('/generate/session-id', userController.generateSessionId)
-router.post('/check/session-id/:sessionId', userController.checkSessionId)
-router.post('/verify/session-id', authenticateJwt, userController.verifyUserSession)
-
-
-router.post('/deposit', authenticateJwt, walletController.deposit)
-
-
-export { router as user };
+export { router as user }
