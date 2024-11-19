@@ -72,6 +72,7 @@ class NodeController {
       return
     }
   }
+
   public async lendGpu(req: Request, res: Response, next: NextFunction) {
     try {
       const { nodeId, duration } = req.body
@@ -88,4 +89,5 @@ class NodeController {
     }
   }
 }
+
 export default NodeController

@@ -3,7 +3,11 @@ import {
   getRewardsByNodeId,
   getUserRewards,
 } from "@/services/prisma/reward"
-import { claimUserReward, getUserTotalReward } from "@/services/reward/main"
+import {
+  claimUserReward,
+  getUserNodeRewards,
+  getUserTotalReward,
+} from "@/services/reward/main"
 import { NextFunction, Request, Response } from "express"
 
 class RewardController {
@@ -57,6 +61,20 @@ class RewardController {
     try {
       const totalReward = await getUserTotalReward(req.user.id)
       return res.status(200).send({ success: true, data: totalReward })
+    } catch (err) {
+      next(err)
+      return
+    }
+  }
+
+  public async getUserNodeRewards(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const data = await getUserNodeRewards(req.user.id)
+      return res.status(200).send({ success: true, data })
     } catch (err) {
       next(err)
       return

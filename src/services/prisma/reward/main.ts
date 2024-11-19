@@ -61,7 +61,8 @@ export async function updateRewardAmount(id: string, amount: number) {
 
 export async function updateRewardEndDate(
   id: string,
-  amount:  number,
+  amount: number,
+  penaltyAmount: number,
   endDate: Date
 ) {
   return await prisma.reward.update({
@@ -70,6 +71,7 @@ export async function updateRewardEndDate(
     },
     data: {
       amount,
+      penaltyAmount,
       endDate,
     },
   })

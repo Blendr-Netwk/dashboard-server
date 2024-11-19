@@ -17,6 +17,11 @@ router.get(
   authenticateJwt,
   rewardController.getUserTotalReward
 )
+router.get(
+  "/rewards/user/node-rewards",
+  authenticateJwt,
+  rewardController.getUserNodeRewards
+)
 router.post("/reward/claim", authenticateJwt, rewardController.claimUserReward)
 
 export { router as reward }

@@ -1,7 +1,4 @@
-
-import { createAdapter } from "@socket.io/redis-adapter";
-import { createClient } from "redis";
-
+import { createClient } from "redis"
 
 const REDIS_HOST = "c15.us-east-1-2.ec2.cloud.redislabs.com"
 const REDIS_PORT = "14673"
@@ -9,6 +6,23 @@ const REDIS_PASSWORD = "E3UYY7nXu88KAPaeHdXcEJKiVrCKcawu"
 
 const url = `redis://default:${REDIS_PASSWORD}@redis-${REDIS_PORT}.${REDIS_HOST}:${REDIS_PORT}`
 
+export const pubClient = createClient({ url })
+export const subClient = pubClient.duplicate()
 
-export const pubClient = createClient({ url });
-export const subClient = pubClient.duplicate();
+export const connectRedis = async () => {
+  try {
+    await pubClient.connect()
+    console.log("Redis client connected")
+  } catch (err) {
+    console.error("Failed to connect to Redis:", err)
+  }
+}
+
+pubClient.on("end", () => {
+  console.log("Redis client disconnected. Reconnecting...")
+  connectRedis()
+})
+
+pubClient.on("error", (err) => {
+  console.error("Redis client error:", err)
+})

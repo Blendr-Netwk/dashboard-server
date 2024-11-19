@@ -1,7 +1,7 @@
 import express, { NextFunction, Request, Response } from "express"
 import bodyParser from "body-parser"
 import cors from "cors"
-import { node, user, openai, data, reward } from "./routes"
+import { node, user, openai, data, reward, fileUpload } from "./routes"
 import { IN_PROD, corsOptions } from "./config"
 import { errorHandler } from "./middleware/errorHandler"
 import { claimRewardEvent } from "./services/ethers/rewardClaimed"
@@ -28,6 +28,7 @@ export const createApp = () => {
   app.use("/api", node)
   app.use("/api", data)
   app.use("/api", reward)
+  app.use("/api", fileUpload)
   // app.use("/api", ai);
 
   //error handles

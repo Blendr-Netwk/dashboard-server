@@ -1,6 +1,8 @@
 import { verifyToken } from "@/middleware"
+import { TaskStatus } from "@prisma/client"
 import { Server } from "socket.io"
 import { freeTheNode } from "../prisma/node"
+import { updateTaskCompleted } from "../prisma/task"
 import { addLogToTask } from "../prisma/task/logs"
 import { pubClient } from "../redis"
 import { RewardService } from "../reward"
@@ -36,7 +38,7 @@ export const initalizeSocketIO = async (io: Server) => {
     const userId = socket.user.id
 
     const rewardService = new RewardService({ mainIO, socketId })
-    
+
     console.log("New Connection: ", socketId)
     pubClient.set(`userId:${userId}`, socketId)
 
@@ -64,9 +66,13 @@ export const initalizeSocketIO = async (io: Server) => {
       await freeTheNode(socketId)
     })
 
-    // socket.on("test", (data) => {
-    //     socket.emit("task_update", `Echo back: ${data.message}`);
-    // });
+    socket.on("BMAIN: task_update", async (data) => {
+      await updateTaskCompleted(data.taskId, data.cid)
+      socket.emit("BMAIN: TASK_UPDATE", {
+        message: `Task completed: ${data.taskId}`,
+      })
+      // await rewardService.addReward()
+    })
 
     socket.on("disconnect", async () => {
       console.log("Disconnect: ", socketId)

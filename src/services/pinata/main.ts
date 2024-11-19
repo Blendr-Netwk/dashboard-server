@@ -1,4 +1,4 @@
-import { PinataSDK, UploadOptions } from "pinata-web3"
+import { PinataSDK, UploadOptions } from "pinata"
 import { generateRandomString } from "@/utils"
 
 const pinataJwt = process.env.PINATA_JWT
@@ -10,34 +10,38 @@ const pinata = new PinataSDK({
   pinataGateway,
 })
 
-const DEFAULT_EXTENSION = "jpg"
-const IMAGE_PATH = "generatedImages"
-
-export const pinFile = async (
-  url: string,
-  userId: string
-): Promise<string | undefined> => {
+export const uploadFile = async (file: Express.Multer.File) => {
   try {
-    const response = await fetch(url)
-    if (!response.ok)
-      throw new Error(`Failed to fetch file: ${response.statusText}`)
-
-    const contentType = response.headers.get("Content-Type")
-    if (!contentType) throw new Error("No content type found")
-
-    const fileExtension = contentType.split("/")[1] || DEFAULT_EXTENSION
-    const fileName = `${userId}/${generateRandomString(10)}.${fileExtension}`
-    const fileNameWithPath = `${IMAGE_PATH}/${fileName}`
+    const name = file.originalname
+    const type = file.mimetype
 
     const options: UploadOptions = {
-      metadata: { name: fileNameWithPath },
       groupId: pinataGroupId,
     }
-      
-    const result = await pinata.upload.url(url, options)
-    return `${pinataGateway}/ipfs/${result.IpfsHash}/${fileName}`
+
+    const multerText = Buffer.from(file.buffer).toString("utf-8")
+    const f = new File([multerText], `${generateRandomString(10)}_${name}`, {
+      type,
+    })
+
+    const upload = await pinata.upload.file(f, options)
+    console.log("upload:", upload)
+    return upload
   } catch (error) {
-    console.error("Error pinning file to IPFS:", error)
+    console.error("Error upload file:", error)
+    return undefined
+  }
+}
+
+export const createSignedURL = async (cid: string) => {
+  try {
+    const url = await pinata.gateways.createSignedURL({
+      cid,
+      expires: 3600,
+    })
+    return url
+  } catch (error) {
+    console.error("Error createSignedURL:", error)
     return undefined
   }
 }
