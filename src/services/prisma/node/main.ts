@@ -8,6 +8,22 @@ export const fetchAllNodes = async () => {
     orderBy: {
       createdAt: "desc",
     },
+    include: {
+      rents: {
+        where: {
+          isValid: true,
+          isClaimed: false,
+          endDate: {
+            gt: new Date(),
+          },
+        },
+        take: 1,
+        select: {
+          startDate: true,
+          endDate: true,
+        },
+      },
+    },
   })
 }
 
@@ -34,15 +50,32 @@ export const fetchMyNodesWithReward = async (userId: string) => {
       ownerId: userId,
     },
     include: {
-      rewards: true
-    }
+      rewards: true,
+    },
   })
 }
 
 export const fetchMyRentalNodes = async (userId: string) => {
   return await prisma.node.findMany({
     where: {
-      rentedById: userId,
+      rents: {
+        some: {
+          rentedById: userId,
+          isValid: true,
+        },
+      },
+    },
+    include: {
+      rents: {
+        where: {
+          rentedById: userId,
+          isValid: true,
+        },
+        select: {
+          startDate: true,
+          endDate: true,
+        },
+      },
     },
   })
 }
@@ -121,7 +154,7 @@ export const disconnectNode = async (socketId: string) => {
   try {
     const nodes = await prisma.node.findMany({
       where: {
-        socketId: socketId,
+        socketId,
       },
     })
 
@@ -129,10 +162,34 @@ export const disconnectNode = async (socketId: string) => {
       return
     }
 
+    for (const node of nodes) {
+      const rents = await prisma.rent.findMany({
+        where: {
+          nodeId: node.id,
+          isValid: true,
+          isClaimed: false,
+          endDate: {
+            gt: new Date(),
+          },
+        },
+      })
+
+      if (rents.length > 0) {
+        await Promise.all(
+          rents.map((rent) => {
+            return prisma.rent.update({
+              where: { id: rent.id },
+              data: { isValid: false },
+            })
+          })
+        )
+      }
+    }
+
     const updates = nodes.map((node: any) => {
       return prisma.node.update({
         where: { id: node.id },
-        data: { isConnected: false, socketId: null },
+        data: { status: "idle", isConnected: false, socketId: null },
       })
     })
 
@@ -144,25 +201,24 @@ export const disconnectNode = async (socketId: string) => {
   }
 }
 
-// export const updateLendedNode = (nodeId: string, keyName: string, duration: number) => {
-export const updateLendedNode = (
-  userId: string,
-  nodeId: string,
-  duration: number
-) => {
-  const expireAt = new Date()
-  expireAt.setHours(expireAt.getHours() + duration)
-
+export const updateLendedNode = (nodeId: string) => {
   return prisma.node.update({
     where: {
       id: nodeId,
     },
     data: {
-      // keyName: keyName,
-      rentedById: userId,
       status: "lended",
-      expireAt: expireAt,
-      startedAt: new Date(),
+    },
+  })
+}
+
+export const updateRentedNode = (nodeId: string) => {
+  return prisma.node.update({
+    where: {
+      id: nodeId,
+    },
+    data: {
+      status: "lended",
     },
   })
 }
@@ -174,9 +230,6 @@ export const updateRemoveRentedNode = (nodeId: string) => {
     },
     data: {
       status: "idle",
-      rentedById: null,
-      expireAt: null,
-      startedAt: null,
     },
   })
 }
@@ -185,12 +238,36 @@ export const freeTheNode = async (socketId: string) => {
   try {
     const nodes = await prisma.node.findMany({
       where: {
-        socketId: socketId,
+        socketId,
       },
     })
 
     if (nodes.length === 0) {
       return
+    }
+
+    for (const node of nodes) {
+      const rents = await prisma.rent.findMany({
+        where: {
+          nodeId: node.id,
+          isValid: true,
+          isClaimed: false,
+          endDate: {
+            gt: new Date(),
+          },
+        },
+      })
+
+      if (rents.length > 0) {
+        await Promise.all(
+          rents.map((rent) => {
+            return prisma.rent.update({
+              where: { id: rent.id },
+              data: { isValid: false },
+            })
+          })
+        )
+      }
     }
 
     const updates = nodes.map((node: any) => {
@@ -236,4 +313,41 @@ export const getAppropriateNode = async (pendingTask: any) => {
   }
 
   return node
+}
+
+export const updateNodeStatusAfterRent = async () => {
+  try {
+    const currentDate = new Date()
+
+    const rents = await prisma.rent.findMany({
+      where: {
+        isValid: true,
+        isClaimed: false,
+        endDate: {
+          lte: currentDate,
+        },
+      },
+    })
+
+    if (rents.length > 0) {
+      const updatePromises = rents.map(async (rent) => {
+        return await prisma.node.update({
+          where: {
+            id: rent.nodeId,
+          },
+          data: {
+            status: "idle",
+          },
+        })
+      })
+
+      const updatedNodes = await Promise.all(updatePromises)
+      return updatedNodes
+    }
+
+    return null
+  } catch (err) {
+    console.error(err)
+    return null
+  }
 }

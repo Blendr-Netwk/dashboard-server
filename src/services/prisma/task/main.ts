@@ -1,6 +1,14 @@
 import { TaskStatus } from "@prisma/client"
 import { prisma } from "../main"
 
+export const fetchTasks = async (userId: string) => {
+  return await prisma.task.findMany({
+    where: {
+      userId,
+    },
+  })
+}
+
 export const saveTask = async (userId: string, data: any) => {
   const {
     taskType,
@@ -44,6 +52,9 @@ export const saveTask = async (userId: string, data: any) => {
       },
       trainingData: trainingData,
       trainingParameters: trainingParameters,
+      node: {
+        connect: { id: data.nodeId },
+      },
     },
   })
   return { task, aiModel }

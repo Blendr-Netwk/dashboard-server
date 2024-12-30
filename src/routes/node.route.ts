@@ -17,9 +17,14 @@ router.get("/nodes", nodeController.getAllNodes)
 router.get("/active/nodes", nodeController.getAllActiveNodes)
 router.get("/my-nodes", authenticateJwt, nodeController.getMyNodes)
 router.get("/rental-nodes", authenticateJwt, nodeController.getMyRentalNodes)
+router.get("/tasks", authenticateJwt, nodeController.getTasks)
 router.post("/add/new-task", authenticateJwt, nodeController.addNewTask)
 // router.get('/tasks', nodeController.addNewTask)
 router.post("/lend/gpu", authenticateJwt, nodeController.lendGpu)
+
+router.post("/rent/gpu", authenticateJwt, nodeController.rentGpu)
+router.post("/rent/claim", authenticateJwt, nodeController.rentClaim)
+router.post("/rent/refund", authenticateJwt, nodeController.rentRefund)
 
 router.get("/logs/:taskId", logController.getLogs)
 

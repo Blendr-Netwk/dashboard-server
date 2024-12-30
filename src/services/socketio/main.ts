@@ -78,8 +78,8 @@ export const initalizeSocketIO = async (io: Server) => {
       console.log("Disconnect: ", socketId)
       try {
         rewardService.end(userId)
-        await pubClient.del(`userId:${userId}`)
         await handleDisconnect(socketId)
+        await pubClient.del(`userId:${userId}`)
       } catch (err) {
         console.log(err)
       }

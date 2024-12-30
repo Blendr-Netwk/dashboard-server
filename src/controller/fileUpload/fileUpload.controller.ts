@@ -1,8 +1,5 @@
 import { NextFunction, Request, Response } from "express"
-import {
-  uploadFile,
-  createSignedURL,
-} from "@/services/pinata/main"
+import { uploadFile, createSignedURL } from "@/services/pinata/main"
 
 class FileUploadController {
   public async upload(req: Request, res: Response, next: NextFunction) {
@@ -14,7 +11,7 @@ class FileUploadController {
       if (!response) throw new Error("Error uploading file to Pinata")
 
       return res.status(200).send({
-        sucess: "Upload successfully",
+        success: "Upload successfully",
         data: {
           cid: response.cid,
         },
@@ -34,7 +31,7 @@ class FileUploadController {
       const signedURL = await createSignedURL(cid)
 
       return res.status(200).send({
-        sucess: "Create Signed URL successfully",
+        success: "Create Signed URL successfully",
         data: signedURL,
       })
     } catch (err) {

@@ -1,64 +1,63 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client"
 
-
-
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
 export const createUser = async (publicAddress: string) => {
-    let user = await prisma.user.findUnique({ where: { publicAddress } });
-    if (!user) {
-        user = await prisma.user.create({
-            data: {
-                nonce: Math.floor(Math.random() * 10000),
-                publicAddress,
-                username: "",
-                email: "",
-            },
-        });
-    }
-    return {
-        nonce: user.nonce,
-        publicAddress: user.publicAddress,
-    };
-};
+  let user = await prisma.user.findUnique({ where: { publicAddress } })
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        nonce: Math.floor(Math.random() * 10000),
+        publicAddress,
+        username: "",
+        email: "",
+      },
+    })
+  }
+  return {
+    nonce: user.nonce,
+    publicAddress: user.publicAddress,
+  }
+}
 
 export const updateUsername = async (userId: string, username: string) => {
-    const updatedUser = await prisma.user.update({
-        where: { id: userId },
-        data: { username },
-
-    });
-    return updatedUser
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { username },
+  })
+  return updatedUser
 }
 
-export const updateSSHPublicKey = async (userId: string, sshPublicKey: string) => {
-    return await prisma.user.update({
-        where: { id: userId },
-        data: { sshPublicKey }
-    });
-
+export const updateSSHPublicKey = async (
+  userId: string,
+  sshPublicKey: string
+) => {
+  return await prisma.user.update({
+    where: { id: userId },
+    data: { sshPublicKey },
+  })
 }
-
 
 export const getUser = async (publicAddress: string) => {
-    const user = await prisma.user.findUnique({
-        where: { publicAddress }, select: {
-            id: true,
-            email: true,
-            username: true,
-            publicAddress: true,
-            nonce: true,
-            balance: true,
-            sshPublicKey: true
-        },
-    });
-    return user;
-};
+  const user = await prisma.user.findUnique({
+    where: { publicAddress },
+    select: {
+      id: true,
+      email: true,
+      username: true,
+      publicAddress: true,
+      nonce: true,
+      balance: true,
+      sshPublicKey: true,
+    },
+  })
+  return user
+}
 
 export const getUserById = async (userId: string) => {
-    return await prisma.user.findUnique({
-        where: { id: userId }
-    });
+  return await prisma.user.findUnique({
+    where: { id: userId },
+  })
 }
 
 export const getUserByAddress = async (address: string) => {
@@ -67,15 +66,22 @@ export const getUserByAddress = async (address: string) => {
   })
 }
 
-export const updateNonce = async (publicAddress: string) => {
-    const nonce = Math.floor(Math.random() * 10000);
+export const getAddressByUserId = async (userId: string) => {
+  return await prisma.user.findUnique({
+    where: { id: userId },
+    select: { publicAddress: true },
+  })
+}
 
-    const user = await prisma.user.update({
-        where: { publicAddress },
-        data: { nonce },
-    });
-    return user;
-};
+export const updateNonce = async (publicAddress: string) => {
+  const nonce = Math.floor(Math.random() * 10000)
+
+  const user = await prisma.user.update({
+    where: { publicAddress },
+    data: { nonce },
+  })
+  return user
+}
 
 export const updateUserRewardNonce = async (address: string) => {
   const user = await getUserByAddress(address)
@@ -90,18 +96,35 @@ export const updateUserRewardNonce = async (address: string) => {
   })
 }
 
-export const updateBalance = async (userId: string, type: "ADD" | "MINUS", amount: number) => {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-        throw new Error("User not found");
-    }
-    let currentBalance = user.balance || 0;
-    if (type === "ADD") currentBalance += amount
-    else if (type === "MINUS") currentBalance -= amount
-    else throw new Error("Invalid type")
+export const updateUserRentNonce = async (address: string) => {
+  const user = await getUserByAddress(address)
+  if (!user) {
+    throw new Error("User not found")
+  }
 
-    return await prisma.user.update({
-        where: { id: userId },
-        data: { balance: currentBalance }
-    });
+  const rentNonce = user.rentNonce + 1
+  await prisma.user.update({
+    where: { publicAddress: address },
+    data: { rentNonce },
+  })
+}
+
+export const updateBalance = async (
+  userId: string,
+  type: "ADD" | "MINUS",
+  amount: number
+) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) {
+    throw new Error("User not found")
+  }
+  let currentBalance = user.balance || 0
+  if (type === "ADD") currentBalance += amount
+  else if (type === "MINUS") currentBalance -= amount
+  else throw new Error("Invalid type")
+
+  return await prisma.user.update({
+    where: { id: userId },
+    data: { balance: currentBalance },
+  })
 }

@@ -1,6 +1,9 @@
+import { RENT_ADDRESS } from "@/constant/web3"
+import rentABI from "@/data/abi/rent.json"
+import { ethers } from "ethers"
+import { getEtherProvider } from "./main"
 
-
-export const getContract = async (address: string, abi: any, provider: any) => {
-
+export const getRentContract = async () => {
+  const provider = getEtherProvider()
+  return new ethers.Contract(RENT_ADDRESS, rentABI, provider)
 }
-

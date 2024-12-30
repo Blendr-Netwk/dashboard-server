@@ -7,6 +7,8 @@ const router = Router()
 const userController: UserController = new UserController()
 const walletController: WalletController = new WalletController()
 
+router.get("/address/:userId", userController.getAddressByUserId)
+
 router.post("/connect-wallet", userController.connectWallet)
 
 router.post("/check-user", userController.checkUser)

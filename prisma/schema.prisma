@@ -26,15 +26,16 @@ model User {
   publicAddress String        @unique
   nonce         Int
   rewardNonce   Int           @default(0)
+  rentNonce      Int           @default(0)
   balance       Float         @default(0)
   nodes         Node[]        @relation("nodes")
-  rentals       Node[]        @relation("rentals")
   tasks         Task[]
   images        Image[]
   aiModel       AIModel[]
   instances     Instance[]
   transactions  Transaction[]
   rewards       Reward[]
+  rents         Rent[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   keyPair       keyPair?
@@ -58,12 +59,26 @@ model Node {
   tasks         Task[]
   keyPairs      keyPair[]
   rewards       Reward[]
-  rentedBy      User?     @relation(name: "rentals", fields: [rentedById], references: [id])
-  rentedById    String?
-  startedAt     DateTime?
-  expireAt      DateTime?
+  rents         Rent[]
   publicIp      String?
   port          Int?      @default(22)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Rent {
+  id            String    @id @default(cuid()) @map("_id")
+  node          Node      @relation(fields: [nodeId], references: [id])
+  nodeId        String
+  rentedBy      User      @relation(fields: [rentedById], references: [id])
+  rentedById    String
+  rentalId      Int       
+  amount        Float     @default(0)
+  duration      Int       @default(0)
+  isValid       Boolean   @default(true)
+  isClaimed     Boolean   @default(false)
+  startDate     DateTime  @default(now())
+  endDate       DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -97,8 +112,8 @@ model Task {
   aiModelid          String
   trainingData       Json
   trainingParameters Json
-  nodeId             String?
-  node               Node?      @relation(fields: [nodeId], references: [id])
+  nodeId             String
+  node               Node       @relation(fields: [nodeId], references: [id])
   logs               Json[]     @default([])
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt

@@ -2,6 +2,7 @@ import { verifyMessage } from "@/services/ethers"
 import { generateAuthToken } from "@/services/jwt"
 import {
   createUser,
+  getAddressByUserId,
   getUser,
   updateNonce,
   updateSSHPublicKey,
@@ -13,6 +14,20 @@ import { NextFunction, Request, Response } from "express"
 const sessions: any = {}
 
 class UserController {
+  public async getAddressByUserId(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const address: any = await getAddressByUserId(req.params.userId)
+      return res.status(200).send(address)
+    } catch (err) {
+      next(err)
+      return
+    }
+  }
+
   public async connectWallet(req: Request, res: Response, next: NextFunction) {
     try {
       const { signature, publicAddress } = req.body

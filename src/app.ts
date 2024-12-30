@@ -4,7 +4,7 @@ import cors from "cors"
 import { node, user, openai, data, reward, fileUpload } from "./routes"
 import { IN_PROD, corsOptions } from "./config"
 import { errorHandler } from "./middleware/errorHandler"
-import { claimRewardEvent } from "./services/ethers/rewardClaimed"
+import { event } from "./services/ethers/event"
 
 export const createApp = () => {
   const app = express()
@@ -34,7 +34,7 @@ export const createApp = () => {
   //error handles
   app.use(errorHandler)
 
-  claimRewardEvent()
+  event()
 
   return app
 }
