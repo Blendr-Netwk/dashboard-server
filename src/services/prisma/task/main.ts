@@ -43,7 +43,7 @@ export const saveTask = async (userId: string, data: any) => {
       description: description,
       taskType: taskType,
       taskDetail: {},
-      status: "PENDING",
+      status: TaskStatus.PENDING,
       user: {
         connect: { id: userId },
       },
@@ -75,6 +75,17 @@ export const fetchTaskById = async (taskId: string) => {
     },
     include: {
       aiModel: true,
+    },
+  })
+}
+
+export const updateTaskInProgress = async (taskId: string) => {
+  return await prisma.task.update({
+    where: {
+      id: taskId,
+    },
+    data: {
+      status: TaskStatus.IN_PROGRESS,
     },
   })
 }
